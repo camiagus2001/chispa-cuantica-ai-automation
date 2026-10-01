@@ -1,23 +1,16 @@
-# Dashboard de Control - Chispa Cuántica
+# Dashboard de Control — Chispa Cuántica
 
-La rúbrica exige un **enlace público a una Shared View**, no el enlace privado de la base. Antes de entregar, abrir el enlace en una ventana de incógnito.
+El tablero de Airtable concentra indicadores de negocio y de auditoría para revisar el estado del sistema sin entrar a n8n.
 
-## KPIs obligatorios
+## KPIs principales
 
-1. **Tasa de aprobación** = Aprobadas por humano / (Aprobadas por humano + Rechazadas por humano) x 100
-2. **Volumen de salida** = cantidad de resultados finales / reservas procesadas en el período definido
-3. **Tasa de error** = Logs Error / (Logs Success + Logs Error) x 100
+1. **Tasa de aprobación**
+2. **Volumen de salida**
+3. **Tasa de error**
 
-## KPIs adicionales
+Como indicadores complementarios se visualizan total de reservas, aprobadas por humano, rechazadas por humano, sin disponibilidad, total de errores y total de Success.
 
-- Total de reservas
-- Sin disponibilidad
-- Reservas por cámara
-- Success vs Error
-- Reintentos
+## Enlaces
 
-## Link público
-
-**Shared View / Interface pública:** https://airtable.com/apprsQXDGVFQ4kDSl/shrXFSFUiGxymWrOZ
-
-> Verificar que no solicite login ni permisos en una ventana de incógnito antes de entregar.
+- **Datos y tablas — Airtable:** https://airtable.com/apprsQXDGVFQ4kDSl/shrXFSFUiGxymWrOZ
+- **Dashboard — Airtable Interface:** https://airtable.com/apprsQXDGVFQ4kDSl/pagMM1FktETvVJ4gH
