@@ -1,0 +1,3690 @@
+{
+  "name": "Chispa Cuántica — Reservas IA",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "maxResults": 1,
+        "filters": {
+          "q": "in:inbox -from:camila.liendro@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1712,
+        32
+      ],
+      "id": "c694585f-eba2-4c5e-b02b-084a6baf6fca",
+      "name": "Recibir correo",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI",
+          "cachedResultUrl": ""
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un asistente encargado de interpretar correos recibidos por Chispa Cuántica.\n\nPrimero clasificá la intención del mensaje.\n\nLas intenciones válidas son únicamente:\n\n- crear_reserva: el usuario quiere reservar o consultar disponibilidad para una fecha/hora concreta.\n- consulta_general: pregunta por servicios, cámaras, funcionamiento, precios u otra información general.\n- cancelar_reserva: quiere cancelar una reserva existente.\n- modificar_reserva: quiere cambiar fecha, hora o cámara de una reserva existente.\n- irrelevante: el correo no tiene relación con Chispa Cuántica.\n\nLas cámaras válidas son:\n- Krashana Kravé\n- Inda Elaiah\n- Amae Lumina\n- Akira Co\n- Lem A\n- Etereum\n\nREGLAS:\n\n- No inventes información.\n- Solo completá camara, fecha y hora cuando estén presentes o sean claramente interpretables.\n- Si la intención NO es crear_reserva, no marques camara, fecha u hora como datos faltantes.\n- datos_faltantes solo debe usarse cuando intencion sea crear_reserva.\n- La fecha debe estar en formato YYYY-MM-DD.\n- La hora debe estar en formato HH:mm.\n- confianza debe ser un número entre 0 y 1.\n- Respondé únicamente JSON válido.\n- No agregues explicaciones ni bloques markdown.\n\nFormato:\n\n{\n  \"intencion\": \"crear_reserva | consulta_general | cancelar_reserva | modificar_reserva | irrelevante\",\n  \"camara\": null,\n  \"fecha\": null,\n  \"hora\": null,\n  \"email_cliente\": \"\",\n  \"datos_faltantes\": [],\n  \"confianza\": 0.0\n}"
+            },
+            {
+              "content": "=Remitente:\n{{ $node[\"Recibir correo\"].json[\"From\"] }}\n\nAsunto:\n{{ $node[\"Recibir correo\"].json[\"Subject\"] }}\n\nMensaje:\n{{ $node[\"Recibir correo\"].json[\"snippet\"] }}\n\nAnalizá el correo y devolvé únicamente el JSON solicitado."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -1520,
+        32
+      ],
+      "id": "f45ec08f-f479-4bac-aead-538e4ceb37b4",
+      "name": "Interpretar intención y datos",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "99acca22-da7c-4b30-a8a0-d3a99ed9eee6",
+              "name": "camara",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).camara }}",
+              "type": "string"
+            },
+            {
+              "id": "e70dba23-64dd-4743-8299-17c1b749ecce",
+              "name": "fecha",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "0e8b7d88-638b-4e43-a63a-19d48cd80eb5",
+              "name": "hora",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).hora }}",
+              "type": "string"
+            },
+            {
+              "id": "249fe501-458a-444b-86eb-eabf4bbe6f09",
+              "name": "email_cliente",
+              "value": "={{ $node[\"Recibir correo\"].json[\"From\"].match(/<([^>]+)>/)?.[1] || $node[\"Recibir correo\"].json[\"From\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fae60b73-e68a-4e12-afa7-c0dfba6c1611",
+              "name": "confianza",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).confianza }}",
+              "type": "number"
+            },
+            {
+              "id": "401c48d3-bd72-4160-8182-9b40d182325e",
+              "name": "mensaje_original",
+              "value": "={{ $node[\"Recibir correo\"].json[\"snippet\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "a0652b07-2a4d-4a07-9173-1b82ead04cbc",
+              "name": "datos_faltantes",
+              "value": "={{ JSON.parse($json.output[0].content[0].text).datos_faltantes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1216,
+        32
+      ],
+      "id": "ba99916b-ed9d-4f56-a637-abab3e9c412b",
+      "name": "Normalizar salida IA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "75f684e2-4128-4b63-9fef-6c106d350bc9",
+              "name": "intencion",
+              "value": "={{ JSON.parse($node[\"Interpretar intención y datos\"].json.output[0].content[0].text).intencion }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1024,
+        32
+      ],
+      "id": "de29d466-b071-48c5-8a22-c25b868c7129",
+      "name": "Extraer intención"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intencion }}",
+                    "rightValue": "crear_reserva",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3dde3c9a-d85a-40f3-893a-4de14312038e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reserva"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d0045bb9-1fd3-4265-b8cc-20fabb7b639f",
+                    "leftValue": "={{ $json.intencion }}",
+                    "rightValue": "consulta_general",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Consulta"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2b8b0ecd-183b-4409-bf35-67d89b37b6a5",
+                    "leftValue": "={{ $json.intencion }}",
+                    "rightValue": "cancelar_reserva",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bca5d853-5629-40f2-ae3e-047aaec48225",
+                    "leftValue": "={{ $json.intencion }}",
+                    "rightValue": "modificar_reserva",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Modificar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afee7e3d-e4ce-4c49-8e15-9ad318499c0f",
+                    "leftValue": "={{ $json.intencion }}",
+                    "rightValue": "irrelevante",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Irrelevante"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -864,
+        -16
+      ],
+      "id": "46dbe359-7f3d-4247-b3ba-b341a2740b0c",
+      "name": "Enrutar por intención"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d14481fe-69ec-4b4f-bb3a-dd35b1421718",
+              "leftValue": "={{ $json.camara }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "6807ce4c-0859-4f68-b5e7-1448a17341e2",
+              "leftValue": "={{ $json.fecha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "910701b5-5531-44e6-9164-48bda2843d74",
+              "leftValue": "={{ $json.hora }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -528,
+        16
+      ],
+      "id": "51271160-d33d-4293-9e25-12cb1299cbd7",
+      "name": "Validar datos obligatorios"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblNn5EcdEqDZWHZX",
+          "mode": "list",
+          "cachedResultName": "Clientes",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblNn5EcdEqDZWHZX"
+        },
+        "filterByFormula": "={Email} = '{{$json.email_cliente}}'",
+        "options": {},
+        "sort": {
+          "property": []
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "31c65168-d311-400c-8588-8ad2f18ad0f2",
+      "name": "Buscar cliente por email",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "97c62c76-10fc-4022-a960-5c74a2ef736e",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "92943948-15fc-4352-8c74-6d6ebd689945",
+      "name": "¿Cliente existente?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ab707f9-135b-4ab6-b7e0-6d49e94cf5d5",
+              "name": "cliente_record_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "483577a9-05c9-404c-971a-9a74e8fcb61d",
+      "name": "Guardar ID cliente existente"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblNn5EcdEqDZWHZX",
+          "mode": "list",
+          "cachedResultName": "Clientes",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblNn5EcdEqDZWHZX"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre": "Cliente Gmail",
+            "Email": "={{ $node[\"Normalizar salida IA\"].json[\"email_cliente\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cliente ID",
+              "displayName": "Cliente ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Alta",
+              "displayName": "Fecha Alta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Ultima Interaccion",
+              "displayName": "Ultima Interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Observaciones",
+              "displayName": "Observaciones",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reservas",
+              "displayName": "Reservas",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        208
+      ],
+      "id": "5e418197-35f8-45fc-8e90-487daa2e5960",
+      "name": "Crear cliente",
+      "retryOnFail": false,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0c098630-5afe-44ab-b5eb-c7e0c9e6479f",
+              "name": "cliente_record_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        192,
+        208
+      ],
+      "id": "eed4325f-0ffb-4b81-ac00-77c5c9bc444e",
+      "name": "Guardar ID cliente nuevo"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbliw2wIfGpJydzQk",
+          "mode": "list",
+          "cachedResultName": "Disponibilidad",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tbliw2wIfGpJydzQk"
+        },
+        "filterByFormula": "=AND(\n  DATETIME_FORMAT({Fecha}, 'YYYY-MM-DD') = '{{$node[\"Normalizar salida IA\"].json[\"fecha\"]}}',\n  {Hora} = '{{$node[\"Normalizar salida IA\"].json[\"hora\"]}}',\n  ARRAYJOIN({Camara}) = '{{$node[\"Normalizar salida IA\"].json[\"camara\"]}}'\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "b0c70818-f4eb-44ed-9dfb-dda690c925ed",
+      "name": "Buscar disponibilidad",
+      "retryOnFail": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5f6ba810-a360-4149-99b7-d8a6d66fc79d",
+              "leftValue": "={{ $json.fields.Disponible ?? false }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        -32
+      ],
+      "id": "80f419ad-e924-4549-b5b0-2151d6ec7dd5",
+      "name": "¿Horario disponible?"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbliw2wIfGpJydzQk",
+          "mode": "list",
+          "cachedResultName": "Disponibilidad",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tbliw2wIfGpJydzQk"
+        },
+        "filterByFormula": "=AND(   DATETIME_FORMAT({Fecha}, 'YYYY-MM-DD') = '{{$node[\"Normalizar salida IA\"].json[\"fecha\"]}}',   {Disponible} = TRUE() )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        96
+      ],
+      "id": "98f73da6-74b4-417c-b006-9de976195b95",
+      "name": "Buscar horarios alternativos",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "fields.Hora",
+              "renameField": true,
+              "outputFieldName": "horarios_alternativos"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        96
+      ],
+      "id": "f5e1f63c-e65e-4e10-80d6-f1a8ffd6e394",
+      "name": "Agrupar horarios alternativos"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un asistente de reservas de Chispa Cuántica - terapias holisticas.\n\nTu tarea es redactar mensajes breves, claros y cordiales para clientes.\n\nReglas:\n- Respondé en español.\n- No inventes datos.\n- No inventes horarios.\n- No inventes disponibilidad.\n- No confirmes definitivamente una reserva.\n- Indicá que la solicitud está pendiente de aprobación final.\n- Usá únicamente la información proporcionada."
+            },
+            {
+              "content": "=El cliente solicitó reservar:\n\nCámara:\n{{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}\n\nFecha:\n{{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}\n\nHora:\n{{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}\n\nEl horario solicitado está disponible.\n\nRedactá una respuesta breve y cordial indicando que la solicitud fue recibida y que está pendiente de aprobación final antes de confirmar la reserva."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        864,
+        -96
+      ],
+      "id": "d8f875d3-d6c7-44b0-90bc-3bcb0547ad9c",
+      "name": "Redactar respuesta pendiente",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0375d3ae-b368-451b-b895-f45bf5606b9e",
+              "name": "respuesta_ia",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1232,
+        -96
+      ],
+      "id": "6680b8f0-163d-4e2d-8648-89dbc1962807",
+      "name": "Guardar respuesta pendiente"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbTFMEGwhzH4n0v",
+          "mode": "list",
+          "cachedResultName": "Reservas",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblbTFMEGwhzH4n0v"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Requiere Aprobacion": true,
+            "Ejecucion n8n ID": "={{ $execution.id }}",
+            "Fecha Solicitada": "={{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}",
+            "Hora Solicitada": "={{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}",
+            "Estado": "Esperando aprobación",
+            "Confianza IA": 1,
+            "Mensaje Original": "=Solicitud de reserva para {{ $node[\"Normalizar salida IA\"].json[\"camara\"] }} el {{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }} a las {{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}",
+            "Respuesta IA": "={{ $json.respuesta_ia }}",
+            "Camara": "={{ $node[\"Buscar disponibilidad\"].json[\"fields\"][\"Camara\"] }}",
+            "Cliente": "={{ [\n  $(\"Guardar ID cliente existente\").isExecuted\n    ? $(\"Guardar ID cliente existente\").first().json.cliente_record_id\n    : $(\"Guardar ID cliente nuevo\").first().json.cliente_record_id\n] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Reserva ID",
+              "displayName": "Reserva ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Ejecucion n8n ID",
+              "displayName": "Ejecucion n8n ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Camara",
+              "displayName": "Camara",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Solicitada",
+              "displayName": "Fecha Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Hora Solicitada",
+              "displayName": "Hora Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesando IA",
+                  "value": "Procesando IA"
+                },
+                {
+                  "name": "Esperando aprobación",
+                  "value": "Esperando aprobación"
+                },
+                {
+                  "name": "Aprobado por humano",
+                  "value": "Aprobado por humano"
+                },
+                {
+                  "name": "Rechazado por humano",
+                  "value": "Rechazado por humano"
+                },
+                {
+                  "name": "Confirmado",
+                  "value": "Confirmado"
+                },
+                {
+                  "name": "Sin disponibilidad",
+                  "value": "Sin disponibilidad"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                },
+                {
+                  "name": "Cancelado",
+                  "value": "Cancelado"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confianza IA",
+              "displayName": "Confianza IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje Original",
+              "displayName": "Mensaje Original",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Respuesta IA",
+              "displayName": "Respuesta IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Requiere Aprobacion",
+              "displayName": "Requiere Aprobacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Procesamiento",
+              "displayName": "Fecha Procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,              "removed": false
+            },
+            {
+              "id": "Canal",
+              "displayName": "Canal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "WhatsApp",
+                  "value": "WhatsApp"
+                },
+                {
+                  "name": "Manual",
+                  "value": "Manual"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Disponibilidad",
+              "displayName": "Disponibilidad",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "b3f456b4-bdea-4aad-81a3-c7bbc40c3a62",
+      "name": "Crear reserva pendiente",
+      "retryOnFail": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "camila.liendro@gmail.com",
+        "subject": "Aprobación requerida - Reserva Chispa Cuántica",
+        "message": "=Nueva solicitud de reserva pendiente de aprobación.\n\nCámara:\n{{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}\n\nFecha:\n{{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}\n\nHora:\n{{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}\n\nRespuesta preparada por IA:\n{{ $json.fields[\"Respuesta IA\"] }}\n\nRevisá la solicitud y aprobá o rechazá antes de confirmar la reserva al cliente.",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -112
+      ],
+      "id": "3c8f9423-ffb8-427b-b252-cb10ad832076",
+      "name": "Solicitar aprobación humana",
+      "webhookId": "046d862f-f4f8-4ac1-ae15-a5eb994b4083",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55507b73-4d6c-4d38-a57f-ecf37173ffa1",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1904,
+        -112
+      ],
+      "id": "4a1161ae-a12d-4bd0-8e59-eb27a66a7ff2",
+      "name": "¿Reserva aprobada?"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbTFMEGwhzH4n0v",
+          "mode": "list",
+          "cachedResultName": "Reservas",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblbTFMEGwhzH4n0v"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Requiere Aprobacion": false,
+            "id": "={{ $node[\"Crear reserva pendiente\"].json[\"id\"] }}",
+            "Estado": "Aprobado por humano"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Reserva ID",
+              "displayName": "Reserva ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Ejecucion n8n ID",
+              "displayName": "Ejecucion n8n ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Camara",
+              "displayName": "Camara",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Solicitada",
+              "displayName": "Fecha Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Hora Solicitada",
+              "displayName": "Hora Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesando IA",
+                  "value": "Procesando IA"
+                },
+                {
+                  "name": "Esperando aprobación",
+                  "value": "Esperando aprobación"
+                },
+                {
+                  "name": "Aprobado por humano",
+                  "value": "Aprobado por humano"
+                },
+                {
+                  "name": "Rechazado por humano",
+                  "value": "Rechazado por humano"
+                },
+                {
+                  "name": "Confirmado",
+                  "value": "Confirmado"
+                },
+                {
+                  "name": "Sin disponibilidad",
+                  "value": "Sin disponibilidad"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                },
+                {
+                  "name": "Cancelado",
+                  "value": "Cancelado"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confianza IA",
+              "displayName": "Confianza IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje Original",
+              "displayName": "Mensaje Original",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Respuesta IA",
+              "displayName": "Respuesta IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Requiere Aprobacion",
+              "displayName": "Requiere Aprobacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Procesamiento",
+              "displayName": "Fecha Procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Canal",
+              "displayName": "Canal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "WhatsApp",
+                  "value": "WhatsApp"
+                },
+                {
+                  "name": "Manual",
+                  "value": "Manual"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Disponibilidad",
+              "displayName": "Disponibilidad",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2128,
+        -192
+      ],
+      "id": "ea4cbf32-078e-44e3-8f15-4656e30d5d6f",
+      "name": "Marcar reserva aprobada",
+      "retryOnFail": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbTFMEGwhzH4n0v",
+          "mode": "list",
+          "cachedResultName": "Reservas",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblbTFMEGwhzH4n0v"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Requiere Aprobacion": false,
+            "Estado": "Rechazado por humano",
+            "id": "={{ $node[\"Crear reserva pendiente\"].json[\"id\"] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Reserva ID",
+              "displayName": "Reserva ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Ejecucion n8n ID",
+              "displayName": "Ejecucion n8n ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Camara",
+              "displayName": "Camara",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Solicitada",
+              "displayName": "Fecha Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Hora Solicitada",
+              "displayName": "Hora Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesando IA",
+                  "value": "Procesando IA"
+                },
+                {
+                  "name": "Esperando aprobación",
+                  "value": "Esperando aprobación"
+                },
+                {
+                  "name": "Aprobado por humano",
+                  "value": "Aprobado por humano"
+                },
+                {
+                  "name": "Rechazado por humano",
+                  "value": "Rechazado por humano"
+                },
+                {
+                  "name": "Confirmado",
+                  "value": "Confirmado"
+                },
+                {
+                  "name": "Sin disponibilidad",
+                  "value": "Sin disponibilidad"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                },
+                {
+                  "name": "Cancelado",
+                  "value": "Cancelado"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confianza IA",
+              "displayName": "Confianza IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje Original",
+              "displayName": "Mensaje Original",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Respuesta IA",
+              "displayName": "Respuesta IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Requiere Aprobacion",
+              "displayName": "Requiere Aprobacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Procesamiento",
+              "displayName": "Fecha Procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Canal",
+              "displayName": "Canal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "WhatsApp",
+                  "value": "WhatsApp"
+                },
+                {
+                  "name": "Manual",
+                  "value": "Manual"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Disponibilidad",
+              "displayName": "Disponibilidad",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2128,
+        0
+      ],
+      "id": "d12ed793-c6bd-4d60-aaa2-abf4df8a7f5a",
+      "name": "Marcar reserva rechazada",
+      "retryOnFail": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $node[\"Recibir correo\"].json[\"threadId\"] }}",
+        "messageId": "={{ $node[\"Recibir correo\"].json[\"id\"] }}",
+        "message": "Hola,  Recibimos tu consulta.  En este momento el sistema automático gestiona principalmente solicitudes de reserva.  Si querés reservar una cámara, indicá: - Cámara - Fecha - Hora  Saludos, Chispa Cuántica",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -544,
+        224
+      ],
+      "id": "47b9135c-4f5e-4e1b-9205-f10cda38ff16",
+      "name": "Responder consulta general",
+      "webhookId": "2df85d75-ef5d-47d3-b428-70f8c7dab364",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $node[\"Recibir correo\"].json[\"threadId\"] }}",
+        "messageId": "={{ $node[\"Recibir correo\"].json[\"id\"] }}",
+        "message": "=Hola,\n\nRecibimos tu solicitud, pero necesitamos algunos datos para poder continuar.\n\nDatos faltantes:\n{{ $json.datos_faltantes.join(\", \") }}\n\nPor favor respondé indicando esa información.\n\nSaludos,\nChispa Cuántica",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        176
+      ],
+      "id": "1a68a1d5-26a0-4b6f-adb9-7f45b178961e",
+      "name": "Pedir datos faltantes",
+      "webhookId": "e3c23427-dfa8-41af-97e2-8fd2d5d38028",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node[\"Normalizar salida IA\"].json[\"email_cliente\"] }}",
+        "subject": "No hay disponibilidad en el horario solicitado - Chispa Cuántica",
+        "message": "={{ $node[\"Redactar propuesta alternativa\"].json.output[0].content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        288
+      ],
+      "id": "415014f9-325a-4154-a5cc-5a807dd12c48",
+      "name": "Enviar horarios alternativos",
+      "webhookId": "83ff1709-3797-4734-b0f9-0c8b5c94a5c0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": false,
+            "Tipo": "Success",
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Nodo": "HITL - Aprobacion Humana",
+            "Descripcion": "Reserva aprobada por el humano y actualizada correctamente.",
+            "Reserva": "={{ [$node[\"Crear reserva pendiente\"].json[\"id\"]] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2576,
+        -192
+      ],
+      "id": "4d482d55-1939-42cc-b689-dfb1ee8fb4a7",
+      "name": "Registrar log aprobación",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": false,
+            "Tipo": "Success",
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Nodo": "HITL - Rechazo Humano",
+            "Reserva": "={{ [$node[\"Crear reserva pendiente\"].json[\"id\"]] }}",
+            "Descripcion": "Reserva rechazada por el humano y actualizada correctamente."
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2576,
+        0
+      ],
+      "id": "b50f5c57-c180-4e4c-b8c8-35f70497fa64",
+      "name": "Registrar log rechazo",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": true,
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Tipo": "Error",
+            "Nodo": "OpenAI - Message a Model",
+            "Codigo Error": "OPENAI_API_ERROR",
+            "Descripcion": "={{ $json.error?.message || $json.message || \"Error desconocido al ejecutar OpenAI\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        288
+      ],
+      "id": "19b8c83a-787d-462f-9563-9d80a4a6ed55",
+      "name": "Registrar error OpenAI",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": true,
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Tipo": "Error",
+            "Nodo": "Airtable - Search Disponibilidad",
+            "Codigo Error": "AIRTABLE_SEARCH_ERROR",
+            "Descripcion": "={{ $json.error?.message || $json.message || \"Error al consultar disponibilidad en Airtable\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        192
+      ],
+      "id": "4f03b125-3a64-4800-94a3-9852cbb5e3e9",
+      "name": "Registrar error disponibilidad",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Tipo": "Error",
+            "Codigo Error": "AIRTABLE_CREATE_RESERVA_ERROR",
+            "Nodo": "Airtable - Create Reserva",
+            "Descripcion": "={{ $json.error?.message || $json.message || \"Error al crear la reserva en Airtable\" }}",
+            "Reintentado": true
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -288
+      ],
+      "id": "53638318-1824-4ef7-85ae-bcba229b58ad",
+      "name": "Registrar error creación reserva",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": true,
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Tipo": "Error",
+            "Nodo": "Airtable - Update Aprobacion",
+            "Codigo Error": "AIRTABLE_UPDATE_APPROVAL_ERROR",
+            "Descripcion": "={{ $json.error?.message || $json.message || \"Error al actualizar la reserva aprobada\" }}",
+            "Reserva": "={{ [$node[\"Crear reserva pendiente\"].json[\"id\"]] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        -384
+      ],
+      "id": "7aaf9b66-c8fe-4e0c-addf-5e2f77ac0ee7",
+      "name": "Registrar error aprobación",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxkAjOSH5NDLA5w",
+          "mode": "list",
+          "cachedResultName": "Logs",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblxkAjOSH5NDLA5w"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reintentado": true,
+            "Ejecucion n8n": "={{ $execution.id }}",
+            "Tipo": "Error",
+            "Nodo": "Airtable - Update Rechazo",
+            "Codigo Error": "AIRTABLE_UPDATE_REJECTION_ERROR",
+            "Descripcion": "={{ $json.error?.message || $json.message || \"Error al actualizar la reserva rechazada\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Log ID",
+              "displayName": "Log ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reserva",
+              "displayName": "Reserva",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ejecucion n8n",
+              "displayName": "Ejecucion n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Warning",
+                  "value": "Warning"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Codigo Error",
+              "displayName": "Codigo Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reintentado",
+              "displayName": "Reintentado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        208
+      ],
+      "id": "2afba6e2-75ed-4671-a502-2add5899200c",
+      "name": "Registrar error rechazo",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI",
+          "cachedResultUrl": ""
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un asistente de reservas de Chispa Cuántica - terapias holisticas. \n\nReglas:\n- Respondé en español.\n- Sé breve y cordial.\n- No inventes horarios.\n- No inventes disponibilidad.\n- No confirmes reservas si el sistema no las confirmó.\n- Usá únicamente los datos recibidos."
+            },
+            {
+              "content": "=El cliente solicitó reservar la cámara:\n{{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}\n\nFecha solicitada:\n{{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}\n\nHora solicitada:\n{{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}\n\nEse horario no está disponible.\n\nHorarios alternativos disponibles:\n{{ $json.horarios_alternativos }}\n\nRedactá una respuesta breve ofreciendo únicamente esos horarios alternativos."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1312,
+        96
+      ],
+      "id": "cb42688a-8415-4fb7-80f9-e405c707fd27",
+      "name": "Redactar propuesta alternativa",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "30ee23d4-8809-47b0-9dbd-b68b24d2424b",
+              "name": "respuesta_ia",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1680,
+        96
+      ],
+      "id": "bbe43c64-3fe5-4910-b381-7414a9eb6e67",
+      "name": "Guardar respuesta alternativa"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apprsQXDGVFQ4kDSl",
+          "mode": "list",
+          "cachedResultName": "Chispa Cuántica — Sistema de Reservas IA",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbTFMEGwhzH4n0v",
+          "mode": "list",
+          "cachedResultName": "Reservas",
+          "cachedResultUrl": "https://airtable.com/apprsQXDGVFQ4kDSl/tblbTFMEGwhzH4n0v"
+        },        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Requiere Aprobacion": false,
+            "Ejecucion n8n ID": "={{ $execution.id }}",
+            "Fecha Solicitada": "={{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}",
+            "Hora Solicitada": "={{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}",
+            "Estado": "Sin disponibilidad",
+            "Confianza IA": 1,
+            "Mensaje Original": "=Solicitud de prueba: reservar {{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}    el {{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}    a las {{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}",
+            "Respuesta IA": "={{ $json.respuesta_ia }}",
+            "Canal": "Manual",
+            "Cliente": "={{ [\n  $(\"Guardar ID cliente existente\").isExecuted\n    ? $(\"Guardar ID cliente existente\").first().json.cliente_record_id\n    : $(\"Guardar ID cliente nuevo\").first().json.cliente_record_id\n] }}",
+            "Camara": "={{ $node[\"Buscar disponibilidad\"].json[\"fields\"][\"Camara\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Reserva ID",
+              "displayName": "Reserva ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Ejecucion n8n ID",
+              "displayName": "Ejecucion n8n ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Camara",
+              "displayName": "Camara",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Solicitada",
+              "displayName": "Fecha Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Hora Solicitada",
+              "displayName": "Hora Solicitada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesando IA",
+                  "value": "Procesando IA"
+                },
+                {
+                  "name": "Esperando aprobación",
+                  "value": "Esperando aprobación"
+                },
+                {
+                  "name": "Aprobado por humano",
+                  "value": "Aprobado por humano"
+                },
+                {
+                  "name": "Rechazado por humano",
+                  "value": "Rechazado por humano"
+                },
+                {
+                  "name": "Confirmado",
+                  "value": "Confirmado"
+                },
+                {
+                  "name": "Sin disponibilidad",
+                  "value": "Sin disponibilidad"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                },
+                {
+                  "name": "Cancelado",
+                  "value": "Cancelado"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confianza IA",
+              "displayName": "Confianza IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje Original",
+              "displayName": "Mensaje Original",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Respuesta IA",
+              "displayName": "Respuesta IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Requiere Aprobacion",
+              "displayName": "Requiere Aprobacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha Procesamiento",
+              "displayName": "Fecha Procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Canal",
+              "displayName": "Canal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "WhatsApp",
+                  "value": "WhatsApp"
+                },
+                {
+                  "name": "Manual",
+                  "value": "Manual"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Disponibilidad",
+              "displayName": "Disponibilidad",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        96
+      ],
+      "id": "d454e43f-7465-4204-925e-bf3604d13efb",
+      "name": "Registrar reserva sin disponibilidad",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "6WqlzkKEIZZTwluR",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node[\"Normalizar salida IA\"].json[\"email_cliente\"] }}",
+        "subject": "Reserva confirmada - Chispa Cuántica",
+        "message": "=Hola,\n\nTu reserva fue aprobada y confirmada.\n\nCámara:\n{{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}\n\nFecha:\n{{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}\n\nHora:\n{{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}\n\nTu reserva quedó confirmada.\n\nSaludos,\nChispa Cuántica",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        -208
+      ],
+      "id": "870907dd-272d-49c2-9e59-dff6b525dc47",
+      "name": "Enviar confirmación al cliente",
+      "webhookId": "03beca9e-9bb0-4890-ae7d-b81a44dba88b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node[\"Normalizar salida IA\"].json[\"email_cliente\"] }}",
+        "subject": "Actualización de tu reserva - Chispa Cuántica",
+        "message": "=Hola,  Tu solicitud de reserva fue revisada y no pudo ser aprobada.  Cámara: {{ $node[\"Normalizar salida IA\"].json[\"camara\"] }}  Fecha: {{ $node[\"Normalizar salida IA\"].json[\"fecha\"] }}  Hora: {{ $node[\"Normalizar salida IA\"].json[\"hora\"] }}  Podés comunicarte con nosotros para consultar otras alternativas disponibles.  Saludos, Chispa Cuántica",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        0
+      ],
+      "id": "b3614ff3-23f4-4b46-947f-7c26d79941fd",
+      "name": "Enviar rechazo al cliente",
+      "webhookId": "bcd11c43-5f88-4108-bdde-5cc1b08fa2fe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tDjTzRlPv2DCkKr5",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir correo": {
+      "main": [
+        [
+          {
+            "node": "Interpretar intención y datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar intención y datos": {
+      "main": [
+        [
+          {
+            "node": "Normalizar salida IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar salida IA": {
+      "main": [
+        [
+          {
+            "node": "Extraer intención",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer intención": {
+      "main": [
+        [
+          {
+            "node": "Enrutar por intención",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar por intención": {
+      "main": [
+        [
+          {
+            "node": "Validar datos obligatorios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder consulta general",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar datos obligatorios": {
+      "main": [
+        [
+          {
+            "node": "Buscar cliente por email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir datos faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar cliente por email": {
+      "main": [
+        [
+          {
+            "node": "¿Cliente existente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Cliente existente?": {
+      "main": [
+        [
+          {
+            "node": "Guardar ID cliente existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar ID cliente existente": {
+      "main": [
+        [
+          {
+            "node": "Buscar disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear cliente": {
+      "main": [
+        [
+          {
+            "node": "Guardar ID cliente nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Guardar ID cliente nuevo": {
+      "main": [
+        [
+          {
+            "node": "Buscar disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "¿Horario disponible?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar error disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Horario disponible?": {
+      "main": [
+        [
+          {
+            "node": "Redactar respuesta pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar horarios alternativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar horarios alternativos": {
+      "main": [
+        [
+          {
+            "node": "Agrupar horarios alternativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar horarios alternativos": {
+      "main": [
+        [
+          {
+            "node": "Redactar propuesta alternativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar respuesta pendiente": {
+      "main": [
+        [
+          {
+            "node": "Guardar respuesta pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar respuesta pendiente": {
+      "main": [
+        [
+          {
+            "node": "Crear reserva pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear reserva pendiente": {
+      "main": [
+        [
+          {
+            "node": "Solicitar aprobación humana",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar error creación reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitar aprobación humana": {
+      "main": [
+        [
+          {
+            "node": "¿Reserva aprobada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Reserva aprobada?": {
+      "main": [
+        [
+          {
+            "node": "Marcar reserva aprobada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar reserva rechazada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar reserva aprobada": {
+      "main": [
+        [
+          {
+            "node": "Enviar confirmación al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar error aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar reserva rechazada": {
+      "main": [
+        [
+          {
+            "node": "Enviar rechazo al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar error rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar error OpenAI": {
+      "main": [
+        []
+      ]
+    },
+    "Redactar propuesta alternativa": {
+      "main": [
+        [
+          {
+            "node": "Guardar respuesta alternativa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar error OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar respuesta alternativa": {
+      "main": [
+        [
+          {
+            "node": "Registrar reserva sin disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar reserva sin disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "Enviar horarios alternativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar confirmación al cliente": {
+      "main": [
+        [
+          {
+            "node": "Registrar log aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar rechazo al cliente": {
+      "main": [
+        [
+          {
+            "node": "Registrar log rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "cc362002-01a9-4f14-89de-a19abee532d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "321fcd49f381b0c49a975af677505da6dbd9c9661e322d8340c0ed4cc7922a39"
+  },
+  "nodeGroups": [],
+  "id": "SPxCTPBmS2WomRYn",
+  "tags": []
+}
