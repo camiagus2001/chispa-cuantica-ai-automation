@@ -2691,7 +2691,9 @@
           ]
         },
         "maxResults": 1,
-        "filters": {}
+        "filters": {
+          "search": "in:inbox -from:approver@example.com"
+        }
       },
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1.4,
