@@ -5,3 +5,4 @@
 - **Dashboard de Control — Airtable Interface:** https://airtable.com/apprsQXDGVFQ4kDSl/pagMM1FktETvVJ4gH
 - **Repositorio GitHub:** https://github.com/camiagus2001/chispa-cuantica-ai-automation
 - **Workflow n8n:** https://github.com/camiagus2001/chispa-cuantica-ai-automation/blob/main/workflow/chispa-cuantica-reservas-n8n.json
+- **Video demo:** https://drive.google.com/file/d/1ClTywqALj9WM-IAaD3iIA8D76_Q47N1A/view
