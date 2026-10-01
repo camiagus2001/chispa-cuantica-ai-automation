@@ -18,6 +18,6 @@ La rúbrica exige un **enlace público a una Shared View**, no el enlace privado
 
 ## Link público
 
-**Shared View / Interface pública:** `REEMPLAZAR_CON_LINK_PUBLICO_AIRTABLE`
+**Shared View / Interface pública:** https://airtable.com/apprsQXDGVFQ4kDSl/shrXFSFUiGxymWrOZ
 
-> Pendiente obligatorio: verificar que no solicite login ni permisos en incógnito.
+> Verificar que no solicite login ni permisos en una ventana de incógnito antes de entregar.
