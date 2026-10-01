@@ -107,6 +107,10 @@ Los KPIs principales documentados son:
 
 El export público de n8n no contiene API Keys ni tokens. Las referencias sensibles fueron sanitizadas para el repositorio.
 
+## Video demo
+
+[Ver archivo del video final](video/Video_Demo_Chispa_Cuantica_FINAL.mp4)
+
 ## Autora
 
 **Camila Liendro**  
