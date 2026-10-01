@@ -2,34 +2,43 @@
 
 ## Minimización de datos
 
-El flujo procesa solo los datos necesarios para la reserva: remitente, cámara, fecha, hora, mensaje y estado operativo.
+El flujo procesa solamente la información necesaria para gestionar una reserva: remitente, cámara, fecha, hora, mensaje y estado operativo.
 
 ## Credenciales
 
-No se publican API Keys, tokens OAuth ni passwords. El JSON incluido en este repositorio fue sanitizado: las referencias a credenciales y el email de aprobación fueron reemplazados.
+Las API Keys, tokens OAuth y contraseñas se administran desde las credenciales de n8n y no se publican dentro de prompts, expresiones, capturas ni documentación.
+
+El workflow incluido en este repositorio está sanitizado: las referencias sensibles de credenciales, webhook y correo del aprobador fueron reemplazadas por valores neutros.
 
 ## Error Handling
 
 Los nodos críticos contemplan:
+
 - `Retry On Fail`;
 - `Error Output`;
 - registro de errores en Airtable Logs;
 - códigos de error identificables.
 
-Se probó un fallo de OpenAI y fue registrado como `OPENAI_API_ERROR`.
+Durante las pruebas se forzó un fallo de OpenAI y se registró como `OPENAI_API_ERROR`.
 
 ## Human-in-the-loop
 
-Una reserva disponible no se confirma automáticamente. Se crea en estado `Esperando aprobación` y se requiere una decisión humana antes de contactar al cliente con el resultado final.
+Una reserva disponible se crea en estado `Esperando aprobación`. La confirmación al cliente se ejecuta únicamente después de recibir una decisión humana.
 
-## Gmail
+## Respuestas organizadas
 
-Las respuestas de consulta y datos faltantes utilizan `Thread ID` para mantener el hilo.
+Los nodos de consulta y datos faltantes responden sobre el mismo hilo mediante `Thread ID` y `Message ID`.
 
 ## Validación determinista
 
-Cámara, fecha y hora se validan con un IF en n8n mediante tres condiciones `notEmpty` combinadas con AND.
+Cámara, fecha y hora se validan con tres condiciones `notEmpty` combinadas mediante `AND`, evitando que una salida incompleta del modelo continúe hacia la búsqueda de disponibilidad.
 
-## Anti-loop
+## Prevención de bucles
 
-El export actual del Gmail Trigger no contiene todavía un filtro `-from:`. Antes de la entrega debe agregarse una exclusión de la cuenta emisora del sistema para evitar bucles de auto-respuesta.
+El Gmail Trigger incorpora un filtro de exclusión para los mensajes emitidos por la cuenta del propio sistema:
+
+```text
+in:inbox -from:approver@example.com
+```
+
+En la versión pública se usa un correo neutro para mantener anonimizada la cuenta real de operación.
