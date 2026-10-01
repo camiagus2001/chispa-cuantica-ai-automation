@@ -1,15 +1,10 @@
 # Evidencias visuales
 
-Las capturas utilizadas en la entrega documentan los principales puntos del sistema:
+Esta carpeta reúne capturas anonimizadas de los puntos principales del sistema:
 
-- Gmail Trigger y workflow principal.
-- Clasificación y routing por intención.
-- Validación de datos obligatorios.
-- Relaciones de Airtable.
-- Human-in-the-loop.
-- Confirmación final.
-- Error Handling.
-- Logs de auditoría.
-- Dashboard de Control.
+- [workflow_principal.png](workflow_principal.png) — Trigger, clasificación, Switch, validación y acceso a Airtable.
+- [hitl_aprobacion.png](hitl_aprobacion.png) — solicitud de aprobación humana antes de confirmar.
+- [logs_airtable.png](logs_airtable.png) — eventos Success/Error y códigos de auditoría.
+- [dashboard_reservas.png](dashboard_reservas.png) — indicadores y gráfico de reservas.
 
-Las capturas fueron anonimizadas cuando contenían correos u otros datos de terceros. La evidencia visual completa se encuentra incorporada dentro del documento final de la entrega.
+La documentación final incluye además otras capturas de Thread Reply, relaciones de tablas, confirmación, errores y evidencias de ejecución.
